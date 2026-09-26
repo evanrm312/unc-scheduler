@@ -1,8 +1,5 @@
 from backend.scheduler import conflicts
 
-from backend.scheduler import conflicts
-
-
 def test_overlapping_same_day():
     a = {
         "days": ["M", "W", "F"],
