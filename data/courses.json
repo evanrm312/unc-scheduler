@@ -1,0 +1,97 @@
+{
+  "COMP 110": [
+    {
+      "section": "001",
+      "days": ["M", "W", "F"],
+      "start": 610,
+      "end": 660,
+      "instructor": "Smith"
+    },
+    {
+      "section": "002",
+      "days": ["M", "W", "F"],
+      "start": 670,
+      "end": 720,
+      "instructor": "Jones"
+    },
+    {
+      "section": "003",
+      "days": ["T", "R"],
+      "start": 660,
+      "end": 735,
+      "instructor": "Lee"
+    }
+  ],
+
+  "MATH 381": [
+    {
+      "section": "001",
+      "days": ["M", "W", "F"],
+      "start": 630,
+      "end": 680,
+      "instructor": "Brown"
+    },
+    {
+      "section": "002",
+      "days": ["M", "W", "F"],
+      "start": 730,
+      "end": 780,
+      "instructor": "Garcia"
+    },
+    {
+      "section": "003",
+      "days": ["T", "R"],
+      "start": 570,
+      "end": 645,
+      "instructor": "Patel"
+    }
+  ],
+
+  "MATH 347": [
+    {
+      "section": "001",
+      "days": ["M", "W", "F"],
+      "start": 670,
+      "end": 720,
+      "instructor": "Nguyen"
+    },
+    {
+      "section": "002",
+      "days": ["M", "W", "F"],
+      "start": 790,
+      "end": 840,
+      "instructor": "Wilson"
+    },
+    {
+      "section": "003",
+      "days": ["T", "R"],
+      "start": 750,
+      "end": 825,
+      "instructor": "Davis"
+    }
+  ],
+
+  "CHEM 101": [
+    {
+      "section": "001",
+      "days": ["M", "W", "F"],
+      "start": 570,
+      "end": 620,
+      "instructor": "Taylor"
+    },
+    {
+      "section": "002",
+      "days": ["M", "W", "F"],
+      "start": 720,
+      "end": 770,
+      "instructor": "Anderson"
+    },
+    {
+      "section": "003",
+      "days": ["T", "R"],
+      "start": 840,
+      "end": 915,
+      "instructor": "Martin"
+    }
+  ]
+}
