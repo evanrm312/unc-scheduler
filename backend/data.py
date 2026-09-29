@@ -4,9 +4,7 @@ from backend import models
 def load_courses():
     with open("data/courses.json") as f:
         courses = json.load(f)
-
     sectioned_courses = dict()
-
     for course_name, sections in courses.items():
         sectioned_courses[course_name] = []
         for section in sections:
