@@ -15,6 +15,13 @@ def conflicts(section_a: models.Section, section_b: models.Section) -> bool:
         return validate_interval
     return False
 
-def generate_schedules(courses):
-    n = len(courses.keys())
+def generate_schedules(courses: dict[str, list[models.Section]]) -> list[tuple[models.Section, ...]]:
+    validated_schedules = list(
+        filter(
+            lambda combo: all(not conflicts(a, b) for a, b in itertools.combinations(combo, 2)),
+            itertools.product(*courses.values())
+        )
+    )
+    return validated_schedules
+
     
