@@ -2,7 +2,7 @@
 
 import itertools
 
-from backend import models
+import models, data
 
 def conflicts(section_a: models.Section, section_b: models.Section) -> bool:
     days_match = any(day in section_a.days for day in section_b.days)
@@ -23,5 +23,3 @@ def generate_schedules(courses: dict[str, list[models.Section]]) -> list[tuple[m
         )
     )
     return validated_schedules
-
-    
