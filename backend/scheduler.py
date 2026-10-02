@@ -23,3 +23,13 @@ def generate_schedules(courses: dict[str, list[models.Section]]) -> list[tuple[m
         )
     )
     return validated_schedules
+
+def search_schedules(schedule_list: list[tuple[models.Section, ...]], *search_params: models.Section, match_all: bool = True) -> list[int]:
+    # returns the index(es) of any matching schedules
+    matcher = all if match_all else any
+    found_indexes = []
+    for index, schedule in enumerate(schedule_list):
+        if matcher(param in schedule for param in search_params):
+            found_indexes.append(index)
+    return found_indexes
+    

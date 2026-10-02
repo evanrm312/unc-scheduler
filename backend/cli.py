@@ -1,4 +1,5 @@
 import data, scheduler
+import time
 
 def main():
     print("Welcome to the Carolina Scheduler!")
@@ -17,22 +18,51 @@ def main():
         "2": build_schedules,
         "3": ranked_schedules,
         "4": preferences,
-        "5": leave
     }
     while True:
-        break
+        user_choice = input("Please select your choice >> ")
+        if user_choice == "5":
+            print("Exiting...")
+            break
+        elif user_choice not in options_map.keys():
+            print("Please select from the options above.")
+        else:
+            options_map[user_choice]()
 
-def build_schedules():
-    pass
+def build_schedules(file_name: str = "./data/courses.json"):
+    # Will be changed in future, just generates all schedules for now
+    print(f"Loading courses from {file_name}...")
+    s = time.perf_counter()
+    courses = data.load_courses(file_name)
+    e = time.perf_counter()
+    print(f"Loaded courses in {e-s}s")
+    print("Generating all possible schedules...")
+    s = time.perf_counter()
+    schedule_list = scheduler.generate_schedules(courses)
+    e = time.perf_counter()
+    print(f"Generated {len(courses)} schedules in {e-s}s")
+    while True:
+        user_input = input("Press v to view all schedules or f to search: ").strip().lower()
+        if user_input not in ["v", "f"]:
+            print("Invalid input")
+        else:
+            # TODO
+            
+
 
 def ranked_schedules():
     pass
 
 def preferences():
-    pass
+    ### short survey to get weighted values
+    """
+    gaps -> prioritize gaps (5) or avoid gaps if possible (1)
+    start-time -> avoid classes w/ start time before this time
+    day-end -> avoids classes w/ start or end times after this time
+    lunch-time -> blocks classes from this time (if important)
 
-def leave():
-    exit()
+    """
+    print()
 
 def conv_time(time_msm: int) -> str:
     hours = time_msm // 60
