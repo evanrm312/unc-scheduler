@@ -1,7 +1,8 @@
 import data, scheduler
 import time
+from dataclasses import fields
 
-def main():
+def main() -> None:
     print("Welcome to the Carolina Scheduler!")
     print("Choose from the following options:")
     print(
@@ -29,7 +30,7 @@ def main():
         else:
             options_map[user_choice]()
 
-def build_schedules(file_name: str = "./data/courses.json"):
+def build_schedules(file_name: str = "./data/courses.json") -> None:
     # Will be changed in future, just generates all schedules for now
     print(f"Loading courses from {file_name}...")
     s = time.perf_counter()
@@ -40,15 +41,21 @@ def build_schedules(file_name: str = "./data/courses.json"):
     s = time.perf_counter()
     schedule_list = scheduler.generate_schedules(courses)
     e = time.perf_counter()
-    print(f"Generated {len(courses)} schedules in {e-s}s")
+    print(f"Generated {len(schedule_list)} schedules in {e-s}s")
     while True:
         user_input = input("Press v to view all schedules or f to search: ").strip().lower()
         if user_input not in ["v", "f"]:
             print("Invalid input")
+        elif user_input == "v":
+            for i, schedule in enumerate(schedule_list):
+                pass
         else:
-            # TODO
-            
+            search_term = input("")
+        break
 
+def print_section(section: tuple[data.Section]) -> None:
+    for field in fields(section):
+        print(f"{field.name}: {getattr(section, field.name)}")
 
 def ranked_schedules():
     pass
@@ -101,4 +108,5 @@ def view_courses(courses: dict = None):
                 )
             break
 
-main()
+if "__name__" == "__main__":
+    main()
