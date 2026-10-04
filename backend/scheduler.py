@@ -15,14 +15,17 @@ def conflicts(section_a: models.Section, section_b: models.Section) -> bool:
         return validate_interval
     return False
 
-def generate_schedules(courses: dict[str, list[models.Section]]) -> list[tuple[models.Section, ...]]:
+def generate_schedules(courses: dict[str, list[models.Section]]) -> list[models.Schedule]:
     validated_schedules = list(
         filter(
             lambda combo: all(not conflicts(a, b) for a, b in itertools.combinations(combo, 2)),
             itertools.product(*courses.values())
         )
     )
-    return validated_schedules
+    validated_sched_objects = []
+    for schedule in validated_schedules:
+        validated_sched_objects.append(models.Schedule(schedule))
+    return validated_sched_objects
 
 def search_schedules(schedule_list: list[tuple[models.Section, ...]], *search_params: models.Section, match_all: bool = True) -> list[int]:
     # returns the index(es) of any matching schedules

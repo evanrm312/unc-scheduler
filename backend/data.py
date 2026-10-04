@@ -1,7 +1,7 @@
 import json
 import models
 
-def load_courses(filename):
+def load_courses(filename = "./data/courses.json"):
     with open(filename) as f:
         courses = json.load(f)
     sectioned_courses = dict()
