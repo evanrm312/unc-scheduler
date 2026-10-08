@@ -37,8 +37,10 @@ def test_ask_weight_reprompts_after_invalid_input(monkeypatch, capsys):
 def test_get_preferences_builds_complete_preferences(monkeypatch):
     times = iter([9 * 60, 17 * 60, 12 * 60, 14 * 60])
     weights = iter([4.0, 3.0, 2.0, 5.0])
+
     monkeypatch.setattr(cli, "ask_time", lambda _prompt: next(times))
     monkeypatch.setattr(cli, "ask_weight", lambda _prompt: next(weights))
+    monkeypatch.setattr("builtins.input", lambda _prompt: "30")
 
     preferences = cli.get_preferences()
 

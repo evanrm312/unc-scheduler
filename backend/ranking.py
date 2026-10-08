@@ -43,7 +43,7 @@ def create_penalty_vector(
     schedule: models.Schedule,
     preferences: models.Preferences
 ) -> list[float]:
-    start_pen = max(0, abs(schedule.earliest_start() - preferences.preferred_start))
+    start_pen = max(0, preferences.preferred_start - schedule.earliest_start())
     end_pen = max(0, schedule.latest_end() - preferences.preferred_end)
     gap_pen = schedule.total_gap_time()
     lunch_pen = lunch_penalty(

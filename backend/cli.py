@@ -2,7 +2,7 @@ import time
 from dataclasses import fields
 
 from . import data
-from ..tests import scheduler
+from . import scheduler
 from . import models
 from . import ranking
 
