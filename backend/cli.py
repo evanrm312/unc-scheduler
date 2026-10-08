@@ -1,4 +1,4 @@
-import data, scheduler
+import data, scheduler, models
 import time
 from dataclasses import fields
 
@@ -69,7 +69,19 @@ def preferences():
     lunch-time -> blocks classes from this time (if important)
 
     """
-    print()
+
+def rank_schedules(preferences: models.Preferences, schedule: models.Schedule):
+    penalty_vector = [
+        max(0, preferences.preferred_start - schedule.earliest_start()),
+        max(0, schedule.latest_end() - preferences.preferred_end),
+        schedule.total_gap_time()
+    ]
+
+    weight_vector = [
+        preferences.start_weight,
+        preferences.end_weight,
+        preferences.gap_weight
+    ]
 
 def conv_time(time_msm: int) -> str:
     hours = time_msm // 60
