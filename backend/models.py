@@ -53,6 +53,5 @@ class Schedule:
     def latest_end(self) -> int:
         return max(section.end for section in self.sections)
 
-    def longest_continuous_gap(self, start: int, end: int) -> int:
-        gap_time = 0
+
         

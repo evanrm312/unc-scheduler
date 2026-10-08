@@ -1,124 +1,299 @@
-import data, scheduler, models
 import time
 from dataclasses import fields
 
+import data
+import scheduler
+import models
+import ranking
+
+
+COURSES_FILE = "./data/courses.json"
+
+
 def main() -> None:
-    print("Welcome to the Carolina Scheduler!")
-    print("Choose from the following options:")
-    print(
-    """
-    1) View sections for a course
-    2) View all possible schedules
-    3) View the best schedules based on your choices #TODO
-    4) Modify/set your preferences #TODO
-    5) Exit
-    """
-    )
+    courses = data.load_courses(COURSES_FILE)
+    user_preferences = None
+
     options_map = {
-        "1": view_courses,
-        "2": build_schedules,
-        "3": ranked_schedules,
-        "4": preferences,
+        "1": lambda: view_courses(courses),
+        "2": lambda: build_schedules(courses),
+        "3": lambda: view_ranked_schedules(courses, user_preferences),
+        "4": lambda: None,
     }
+
+    print("Welcome to the Carolina Scheduler!")
+
     while True:
-        user_choice = input("Please select your choice >> ")
+        print(
+            """
+1) View sections for a course
+2) View all possible schedules
+3) View the best schedules based on your preferences
+4) Modify/set your preferences
+5) Exit
+"""
+        )
+
+        user_choice = input("Please select your choice >> ").strip()
+
         if user_choice == "5":
             print("Exiting...")
             break
-        elif user_choice not in options_map.keys():
+
+        if user_choice == "4":
+            user_preferences = get_preferences()
+            continue
+
+        if user_choice not in options_map:
             print("Please select from the options above.")
-        else:
-            options_map[user_choice]()
+            continue
 
-def build_schedules(file_name: str = "./data/courses.json") -> None:
-    # Will be changed in future, just generates all schedules for now
-    print(f"Loading courses from {file_name}...")
-    s = time.perf_counter()
-    courses = data.load_courses(file_name)
-    e = time.perf_counter()
-    print(f"Loaded courses in {e-s}s")
+        options_map[user_choice]()
+
+
+def build_schedules(
+    courses: dict[str, list[models.Section]],
+) -> list[models.Schedule]:
+
     print("Generating all possible schedules...")
-    s = time.perf_counter()
+
+    start = time.perf_counter()
     schedule_list = scheduler.generate_schedules(courses)
-    e = time.perf_counter()
-    print(f"Generated {len(schedule_list)} schedules in {e-s}s")
+    end = time.perf_counter()
+
+    print(
+        f"Generated {len(schedule_list)} schedules "
+        f"in {end - start:.4f}s"
+    )
+
     while True:
-        user_input = input("Press v to view all schedules or f to search: ").strip().lower()
-        if user_input not in ["v", "f"]:
-            print("Invalid input")
-        elif user_input == "v":
-            for i, schedule in enumerate(schedule_list):
-                pass
-        else:
-            search_term = input("")
-        break
+        user_input = input(
+            "Press 'v' to view schedules or 'q' to return: "
+        ).strip().lower()
 
-def print_section(section: tuple[data.Section]) -> None:
+        if user_input == "q":
+            return schedule_list
+
+        if user_input == "v":
+            print_schedules(schedule_list)
+            return schedule_list
+
+        print("Invalid input.")
+
+
+def view_ranked_schedules(
+    courses: dict[str, list[models.Section]],
+    preferences: models.Preferences | None,
+) -> None:
+
+    if preferences is None:
+        print("Please set your preferences first.")
+        return
+
+    print("Generating schedules...")
+
+    schedules = scheduler.generate_schedules(courses)
+
+    ranked = ranking.rank_schedules(
+        schedules,
+        preferences
+    )
+
+    try:
+        count = int(
+            input(
+                f"How many schedules would you like to view "
+                f"(1-{len(ranked)})? "
+            )
+        )
+    except ValueError:
+        print("Please enter a number.")
+        return
+
+    count = max(1, min(count, len(ranked)))
+
+    print_schedules(ranked[:count])
+
+
+def get_preferences() -> models.Preferences:
+    print(
+        """
+Enter your scheduling preferences.
+Times should be entered in HH:MM format using 24-hour time.
+Weights determine how important each preference is.
+Use values from 0 to 5.
+"""
+    )
+
+    preferred_start = ask_time(
+        "Preferred earliest start time: "
+    )
+
+    preferred_end = ask_time(
+        "Preferred latest end time: "
+    )
+
+    lunch_start = ask_time(
+        "Earliest acceptable lunch time: "
+    )
+
+    lunch_end = ask_time(
+        "Latest acceptable lunch time: "
+    )
+
+    start_weight = ask_weight(
+        "Importance of avoiding early classes (0-5): "
+    )
+
+    end_weight = ask_weight(
+        "Importance of avoiding late classes (0-5): "
+    )
+
+    gap_weight = ask_weight(
+        "Importance of avoiding gaps (0-5): "
+    )
+
+    lunch_weight = ask_weight(
+        "Importance of having a lunch break (0-5): "
+    )
+
+    preferences = models.Preferences(
+        preferred_start=preferred_start,
+        preferred_end=preferred_end,
+        start_weight=start_weight,
+        end_weight=end_weight,
+        gap_weight=gap_weight,
+        lunch_start=lunch_start,
+        lunch_end=lunch_end,
+        lunch_weight=lunch_weight,
+    )
+
+    print("Preferences updated.")
+
+    return preferences
+
+
+def ask_time(prompt: str) -> int:
+    while True:
+        value = input(prompt).strip()
+
+        try:
+            hours, minutes = map(int, value.split(":"))
+
+            if not 0 <= hours <= 23:
+                raise ValueError
+
+            if not 0 <= minutes <= 59:
+                raise ValueError
+
+            return hours * 60 + minutes
+
+        except ValueError:
+            print("Enter time in HH:MM format.")
+
+
+def ask_weight(prompt: str) -> float:
+    while True:
+        try:
+            value = float(input(prompt))
+
+            if 0 <= value <= 5:
+                return value
+
+            print("Enter a value between 0 and 5.")
+
+        except ValueError:
+            print("Enter a numeric value.")
+
+
+def print_schedules(
+    schedules: list[models.Schedule],
+) -> None:
+
+    for index, schedule in enumerate(
+        schedules,
+        start=1
+    ):
+        print(f"\nSchedule {index}")
+        print("-" * 40)
+
+        for day, sections in schedule.sections_by_day().items():
+            print(day)
+
+            for section in sections:
+                print(
+                    f"  {conv_time(section.start)}-"
+                    f"{conv_time(section.end)} "
+                    f"{section.course} "
+                    f"Section {section.section}"
+                )
+
+        print(
+            f"Total gap time: "
+            f"{schedule.total_gap_time()} minutes"
+        )
+
+
+def print_section(section: models.Section) -> None:
     for field in fields(section):
-        print(f"{field.name}: {getattr(section, field.name)}")
+        print(
+            f"{field.name}: "
+            f"{getattr(section, field.name)}"
+        )
 
-def ranked_schedules():
-    pass
-
-def preferences():
-    ### short survey to get weighted values
-    """
-    gaps -> prioritize gaps (5) or avoid gaps if possible (1)
-    start-time -> avoid classes w/ start time before this time
-    day-end -> avoids classes w/ start or end times after this time
-    lunch-time -> blocks classes from this time (if important)
-
-    """
-
-def rank_schedules(preferences: models.Preferences, schedule: models.Schedule):
-    penalty_vector = [
-        max(0, preferences.preferred_start - schedule.earliest_start()),
-        max(0, schedule.latest_end() - preferences.preferred_end),
-        schedule.total_gap_time()
-    ]
-
-    weight_vector = [
-        preferences.start_weight,
-        preferences.end_weight,
-        preferences.gap_weight
-    ]
 
 def conv_time(time_msm: int) -> str:
     hours = time_msm // 60
     minutes = time_msm % 60
-    if minutes < 10:
-        minutes = f"0{minutes}"
-    return f"{hours}:{minutes}"
 
-def view_courses(courses: dict = None):
-    if courses is None:
-        courses = data.load_courses()
-    user_choice = ""
+    return f"{hours:02d}:{minutes:02d}"
+
+
+def view_courses(
+    courses: dict[str, list[models.Section]],
+) -> None:
+
     choices = {
         str(number): course
-        for number, course in enumerate(courses.keys(), start=1)
+        for number, course in enumerate(
+            courses.keys(),
+            start=1
+        )
     }
-    for k, v in choices.items():
-        print(f"{k}: {v}")
-    while True:
-        user_choice = input("Enter the course you would like to view sections for or press 'q' to exit: ")
-        if user_choice.lower().strip() == 'q':
-            print("Exiting...")
-            return
-        if user_choice not in choices.keys():
-            print("Please enter a course number from the list above.")
-        else:
-            for section in courses[choices[user_choice]]:
-                print(
-                    f"""
-                    Section number: {section.section}
-                    Days: {"".join(section.days)}
-                    Start time: {conv_time(section.start)}
-                    End time: {conv_time(section.end)}
-                    Instructor: {section.instructor}
-                    """
-                )
-            break
 
-if "__name__" == "__main__":
+    for number, course in choices.items():
+        print(f"{number}: {course}")
+
+    while True:
+        user_choice = input(
+            "Enter a course number or press 'q' to exit: "
+        ).strip()
+
+        if user_choice.lower() == "q":
+            return
+
+        if user_choice not in choices:
+            print(
+                "Please enter a course number "
+                "from the list above."
+            )
+            continue
+
+        selected_course = choices[user_choice]
+
+        for section in courses[selected_course]:
+            print(
+                f"""
+Section number: {section.section}
+Days: {"".join(section.days)}
+Start time: {conv_time(section.start)}
+End time: {conv_time(section.end)}
+Instructor: {section.instructor}
+"""
+            )
+
+        return
+
+
+if __name__ == "__main__":
     main()
