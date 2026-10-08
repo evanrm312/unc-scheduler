@@ -1,4 +1,4 @@
-import models
+from . import models
 
 def dot_product(v1: list[float], v2: list[float]) -> float:
     if len(v1) == len(v2):
@@ -43,7 +43,7 @@ def create_penalty_vector(
     schedule: models.Schedule,
     preferences: models.Preferences
 ) -> list[float]:
-    start_pen = max(0, schedule.earliest_start() - preferences.preferred_start)
+    start_pen = max(0, abs(schedule.earliest_start() - preferences.preferred_start))
     end_pen = max(0, schedule.latest_end() - preferences.preferred_end)
     gap_pen = schedule.total_gap_time()
     lunch_pen = lunch_penalty(

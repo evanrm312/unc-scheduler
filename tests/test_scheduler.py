@@ -1,62 +1,73 @@
-from backend.scheduler import conflicts, generate_schedules
-from backend.data import load_courses
-import itertools
+import pytest
 
-from backend import models
-from backend.scheduler import conflicts
+from backend import models, scheduler
 
 
-def make_section(days, start, end):
-    return models.Section(
-        course="TEST 101",
-        section="001",
-        days=days,
-        start=start,
-        end=end,
-        instructor="Test Instructor",
-    )
+@pytest.mark.parametrize(
+    ("days_a", "start_a", "end_a", "days_b", "start_b", "end_b", "expected"),
+    [
+        (["M"], 600, 660, ["M"], 630, 690, True),
+        (["M"], 600, 660, ["M"], 660, 720, False),
+        (["M", "W"], 600, 660, ["T", "Th"], 600, 660, False),
+        (["M", "W", "F"], 600, 660, ["W"], 630, 690, True),
+    ],
+)
+def test_conflicts(
+    make_section,
+    days_a,
+    start_a,
+    end_a,
+    days_b,
+    start_b,
+    end_b,
+    expected,
+):
+    a = make_section(days=days_a, start=start_a, end=end_a)
+    b = make_section(days=days_b, start=start_b, end=end_b)
+
+    assert scheduler.conflicts(a, b) is expected
 
 
-def test_overlapping_same_day():
-    a = make_section(["M", "W", "F"], 600, 660)
-    b = make_section(["M", "W", "F"], 630, 690)
+def test_generate_schedules_rejects_only_conflicting_combinations(make_section):
+    a1 = make_section(course="A", section="001", days=["M"], start=540, end=600)
+    a2 = make_section(course="A", section="002", days=["T"], start=540, end=600)
+    b1 = make_section(course="B", section="001", days=["M"], start=570, end=630)
+    b2 = make_section(course="B", section="002", days=["W"], start=570, end=630)
 
-    assert conflicts(a, b) is True
+    schedules = scheduler.generate_schedules({"A": [a1, a2], "B": [b1, b2]})
+    section_pairs = [schedule.sections for schedule in schedules]
 
-
-def test_nonoverlapping_same_day():
-    a = make_section(["M"], 600, 660)
-    b = make_section(["M"], 720, 780)
-
-    assert conflicts(a, b) is False
-
-
-def test_same_time_different_days():
-    a = make_section(["M", "W"], 600, 660)
-    b = make_section(["T", "Th"], 600, 660)
-
-    assert conflicts(a, b) is False
+    assert len(schedules) == 3
+    assert all(isinstance(schedule, models.Schedule) for schedule in schedules)
+    assert (a1, b1) not in section_pairs
+    assert len(section_pairs) == 3
+    assert (a1, b2) in section_pairs
+    assert (a2, b1) in section_pairs
+    assert (a2, b2) in section_pairs
 
 
-def test_touching_intervals():
-    a = make_section(["M"], 600, 660)
-    b = make_section(["M"], 660, 720)
+def test_search_schedules_match_all(make_section):
+    a = make_section(course="A", section="001")
+    b = make_section(course="B", section="001")
+    c = make_section(course="C", section="001")
+    schedules = [
+        models.Schedule((a, b)),
+        models.Schedule((a, c)),
+        models.Schedule((b, c)),
+    ]
 
-    assert conflicts(a, b) is False
+    assert scheduler.search_schedules(schedules, a, b) == [0]
 
 
-def test_partial_day_overlap():
-    a = make_section(["M", "W", "F"], 600, 660)
-    b = make_section(["W"], 630, 690)
+def test_search_schedules_match_any(make_section):
+    a = make_section(course="A", section="001")
+    b = make_section(course="B", section="001")
+    c = make_section(course="C", section="001")
+    d = make_section(course="D", section="001")
+    schedules = [
+        models.Schedule((a, b)),
+        models.Schedule((a, c)),
+        models.Schedule((c, d)),
+    ]
 
-    assert conflicts(a, b) is True
-
-def test_full_course_tuple():
-    a = load_courses()
-    l = generate_schedules(a)
-    assert len(l) > 0 and len(a) > 0
-    for i in l:
-        assert len(i) == len(a)
-        c = [conflicts(a, b) for a, b in itertools.combinations(i, 2)]
-        assert True not in c
-
+    assert scheduler.search_schedules(schedules, b, d, match_all=False) == [0, 2]

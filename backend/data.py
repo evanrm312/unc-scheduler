@@ -1,5 +1,5 @@
 import json
-import models
+from . import models
 
 def load_courses(filename = "./data/courses.json"):
     with open(filename) as f:

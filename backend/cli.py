@@ -1,10 +1,10 @@
 import time
 from dataclasses import fields
 
-import data
-import scheduler
-import models
-import ranking
+from . import data
+from ..tests import scheduler
+from . import models
+from . import ranking
 
 
 COURSES_FILE = "./data/courses.json"
@@ -157,12 +157,23 @@ Use values from 0 to 5.
         "Importance of having a lunch break (0-5): "
     )
 
+    while True:
+        try:
+            lunch_length = int(input(
+                "How long should your lunch break be (in minutes): "
+            ))
+            break
+        except ValueError:
+            print("Please enter the time as a number!")
+
+
     preferences = models.Preferences(
         preferred_start=preferred_start,
         preferred_end=preferred_end,
         start_weight=start_weight,
         end_weight=end_weight,
         gap_weight=gap_weight,
+        lunch_length=lunch_length,
         lunch_start=lunch_start,
         lunch_end=lunch_end,
         lunch_weight=lunch_weight,
